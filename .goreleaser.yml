@@ -3,6 +3,10 @@ project_name: web-indexer
 before:
   hooks:
     - go mod tidy
+gitlab_urls:
+  api: https://oaklab.hu/api/v4
+  download: https://oaklab.hu
+  use_package_registry: true
 builds:
   - id: "web-indexer"
     env:
@@ -37,25 +41,14 @@ snapshot:
   version_template: "{{ .Tag }}-next"
 checksum:
   name_template: 'checksums.txt'
-signs:
-  - artifacts: all
-    args:
-      - "--batch"
-      - "--local-user"
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
 dockers:
   - id: web-indexer
     ids:
       - web-indexer
     image_templates:
-      - joshbeard/web-indexer:latest
-      - joshbeard/web-indexer:{{ .Tag }}
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}
+      - olcr.io/crys/web-indexer:latest
+      - olcr.io/crys/web-indexer:stable
+      - olcr.io/crys/web-indexer:{{ .Tag }}
     extra_files:
       - "entrypoint.sh"
     build_flag_templates:
@@ -63,28 +56,15 @@ dockers:
       - "--platform=linux/amd64,linux/arm64"
     use: buildx
 nfpms:
-  - id: 'testpkg'
+  - id: web-indexer
+    ids:
+      - web-indexer
     vendor: "Josh Beard"
     maintainer: "Josh Beard <josh@jbeard.dev>"
     homepage: "http://github.com/joshbeard/web-indexer"
     license: "MIT"
     description: Generate static indexes for local paths and S3 buckets
-    #prerelease: beta1
-    release: "1"
     priority: "extra"
     section: vcs
     formats:
-      - apk
       - deb
-      - rpm
-      - archlinux
-    rpm:
-      signature:
-        key_file: key.gpg
-    deb:
-      signature:
-        key_file: key.gpg
-    # FIXME: gpg signing apk
-    apk: {}
-    archlinux:
-      packager: Josh Beard <josh@jbeard.dev>
