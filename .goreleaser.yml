@@ -3,9 +3,12 @@ project_name: web-indexer
 before:
   hooks:
     - go mod tidy
+gitlab_urls:
+  api: https://oaklab.hu/api/v4
+  download: https://oaklab.hu
+  use_package_registry: true
 builds:
-  - id: "web-indexer"
-    env:
+  - env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
     flags:
@@ -22,10 +25,7 @@ builds:
     main: .
     binary: web-indexer
 archives:
-  - id: "tarball"
-    ids:
-      - "web-indexer"
-    formats: ['tar.gz']
+  - formats: ['tar.gz']
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format_overrides:
       - goos: windows
@@ -37,16 +37,6 @@ snapshot:
   version_template: "{{ .Tag }}-next"
 checksum:
   name_template: 'checksums.txt'
-signs:
-  - artifacts: all
-    args:
-      - "--batch"
-      - "--local-user"
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
 dockers:
   - id: web-indexer-amd64
     ids:
@@ -55,15 +45,16 @@ dockers:
     goos: linux
     goarch: amd64
     image_templates:
-      - joshbeard/web-indexer:{{ .Tag }}-amd64
-      - joshbeard/web-indexer:latest-amd64
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}-amd64
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest-amd64
+      - olcr.io/crys/web-indexer/amd64:latest
+      - olcr.io/crys/web-indexer/amd64:stable
+      - olcr.io/crys/web-indexer/amd64:{{ .Tag }}
     extra_files:
       - "entrypoint.sh"
     build_flag_templates:
       - "--pull"
       - "--platform=linux/amd64"
+      - "--provenance=false"
+      - "--sbom=false"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
@@ -75,61 +66,41 @@ dockers:
     goos: linux
     goarch: arm64
     image_templates:
-      - joshbeard/web-indexer:{{ .Tag }}-arm64
-      - joshbeard/web-indexer:latest-arm64
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}-arm64
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest-arm64
+      - olcr.io/crys/web-indexer/arm64:latest
+      - olcr.io/crys/web-indexer/arm64:stable
+      - olcr.io/crys/web-indexer/arm64:{{ .Tag }}
     extra_files:
       - "entrypoint.sh"
     build_flag_templates:
       - "--pull"
-      - "--platform=linux/arm64/v8"
+      - "--platform=linux/arm64"
+      - "--provenance=false"
+      - "--sbom=false"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Version}}"
 
 docker_manifests:
-  - name_template: joshbeard/web-indexer:{{ .Tag }}
+  - name_template: olcr.io/crys/web-indexer:latest
     image_templates:
-      - joshbeard/web-indexer:{{ .Tag }}-amd64
-      - joshbeard/web-indexer:{{ .Tag }}-arm64
-  - name_template: joshbeard/web-indexer:latest
+      - olcr.io/crys/web-indexer/amd64:latest
+      - olcr.io/crys/web-indexer/arm64:latest
+  - name_template: olcr.io/crys/web-indexer:stable
     image_templates:
-      - joshbeard/web-indexer:latest-amd64
-      - joshbeard/web-indexer:latest-arm64
-  - name_template: ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}
+      - olcr.io/crys/web-indexer/amd64:stable
+      - olcr.io/crys/web-indexer/arm64:stable
+  - name_template: olcr.io/crys/web-indexer:{{ .Tag }}
     image_templates:
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}-amd64
-      - ghcr.io/joshbeard/web-indexer/web-indexer:{{ .Tag }}-arm64
-  - name_template: ghcr.io/joshbeard/web-indexer/web-indexer:latest
-    image_templates:
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest-amd64
-      - ghcr.io/joshbeard/web-indexer/web-indexer:latest-arm64
+      - olcr.io/crys/web-indexer/amd64:{{ .Tag }}
+      - olcr.io/crys/web-indexer/arm64:{{ .Tag }}
 
 nfpms:
-  - id: 'testpkg'
-    vendor: "Josh Beard"
-    maintainer: "Josh Beard <josh@jbeard.dev>"
-    homepage: "http://github.com/joshbeard/web-indexer"
-    license: "MIT"
+  - maintainer: Kristof Bach <crys@crys.hu>
+    homepage: https://oaklab.hu/crys/web-indexer
+    license: MIT
     description: Generate static indexes for local paths and S3 buckets
-    #prerelease: beta1
-    release: "1"
-    priority: "extra"
-    section: vcs
+    priority: optional
+    section: utils
     formats:
-      - apk
       - deb
-      - rpm
-      - archlinux
-    rpm:
-      signature:
-        key_file: key.gpg
-    deb:
-      signature:
-        key_file: key.gpg
-    # FIXME: gpg signing apk
-    apk: {}
-    archlinux:
-      packager: Josh Beard <josh@jbeard.dev>
