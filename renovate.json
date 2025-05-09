@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "oaklab/renovate-presets",
+    "oaklab/renovate-presets:docker",
+    "oaklab/renovate-presets:go"
+  ],
+  "github-actions": {
+    "enabled": false
+  },
+  "reviewers": [
+    "crys"
+  ]
+}
