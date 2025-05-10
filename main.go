@@ -69,6 +69,8 @@ func run(args []string) error {
 		return fmt.Errorf("unable to unmarshal config: %w", err)
 	}
 
+	fmt.Println("S3 Endpoint:", cfg.S3Endpoint)
+
 	// If 2 arguments are passed, the first is the source and the
 	// second is the target
 	if len(args) == 2 {
@@ -124,6 +126,7 @@ func init() {
 	cobra.OnInitialize(initConfig(&cfg.CfgFile))
 
 	rootCmd.PersistentFlags().StringVarP(&cfg.CfgFile, "config", "c", "", "config file")
+	rootCmd.Flags().StringVarP(&cfg.S3Endpoint, "s3-endpoint", "", "", "The S3 endpoint to use. Only needed for non-AWS S3 endpoints.")
 	rootCmd.Flags().StringVarP(&cfg.BaseURL, "base-url", "u", "", "A URL to prepend to the links")
 	rootCmd.Flags().StringVarP(&cfg.DateFormat, "date-format", "", "2006-01-02 15:04:05 MST", "The date format to use in the index page")
 	rootCmd.Flags().BoolVarP(&cfg.DirsFirst, "dirs-first", "", true, "List directories first")
