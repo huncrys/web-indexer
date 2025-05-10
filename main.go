@@ -69,8 +69,6 @@ func run(args []string) error {
 		return fmt.Errorf("unable to unmarshal config: %w", err)
 	}
 
-	fmt.Println("S3 Endpoint:", cfg.S3Endpoint)
-
 	// If 2 arguments are passed, the first is the source and the
 	// second is the target
 	if len(args) == 2 {
