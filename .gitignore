@@ -1,4 +1,4 @@
-dist
+/dist
 *.zip
 *.tar.gz
 index.html
@@ -8,3 +8,4 @@ coverage.txt
 coverage.html
 coverage.xml
 checkstyle-report.xml
+/web-indexer
