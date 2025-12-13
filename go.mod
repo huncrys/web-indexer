@@ -1,6 +1,8 @@
 module github.com/joshbeard/web-indexer
 
-go 1.24.2
+go 1.25.0
+
+toolchain go1.25.5
 
 require (
 	github.com/aws/aws-sdk-go v1.55.7
