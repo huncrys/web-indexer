@@ -33,6 +33,9 @@ archives:
     files:
       - none*
 
+checksum:
+  name_template: 'checksums.txt'
+
 nfpms:
   - maintainer: Kristof Bach <crys@crys.hu>
     homepage: https://oaklab.hu/crys/web-indexer
