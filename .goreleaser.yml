@@ -1,98 +1,40 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
-project_name: web-indexer
+
 before:
   hooks:
     - go mod tidy
+
 gitlab_urls:
   api: https://oaklab.hu/api/v4
   download: https://oaklab.hu
   use_package_registry: true
+  use_job_token: true
+
 builds:
   - env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
-    flags:
-      - -trimpath
-    ldflags:
-      - "-s -w -X main.version={{.Version}}"
     goos:
       - linux
-      - darwin
-      - freebsd
     goarch:
       - amd64
       - arm64
-    main: .
-    binary: web-indexer
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
 archives:
   - name_template: |-
       {{ .Binary }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}
     formats:
-      - tar.gz
       - binary
     files:
       - none*
-snapshot:
-  version_template: "{{ .Tag }}-next"
+
 checksum:
   name_template: 'checksums.txt'
-dockers:
-  - id: web-indexer-amd64
-    ids:
-      - web-indexer
-    use: buildx
-    goos: linux
-    goarch: amd64
-    image_templates:
-      - olcr.io/crys/web-indexer/amd64:latest
-      - olcr.io/crys/web-indexer/amd64:stable
-      - olcr.io/crys/web-indexer/amd64:{{ .Tag }}
-    extra_files:
-      - "entrypoint.sh"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/amd64"
-      - "--provenance=false"
-      - "--sbom=false"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-  - id: web-indexer-arm64
-    ids:
-      - web-indexer
-    use: buildx
-    goos: linux
-    goarch: arm64
-    image_templates:
-      - olcr.io/crys/web-indexer/arm64:latest
-      - olcr.io/crys/web-indexer/arm64:stable
-      - olcr.io/crys/web-indexer/arm64:{{ .Tag }}
-    extra_files:
-      - "entrypoint.sh"
-    build_flag_templates:
-      - "--pull"
-      - "--platform=linux/arm64"
-      - "--provenance=false"
-      - "--sbom=false"
-      - "--label=org.opencontainers.image.created={{.Date}}"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Version}}"
-
-docker_manifests:
-  - name_template: olcr.io/crys/web-indexer:latest
-    image_templates:
-      - olcr.io/crys/web-indexer/amd64:latest
-      - olcr.io/crys/web-indexer/arm64:latest
-  - name_template: olcr.io/crys/web-indexer:stable
-    image_templates:
-      - olcr.io/crys/web-indexer/amd64:stable
-      - olcr.io/crys/web-indexer/arm64:stable
-  - name_template: olcr.io/crys/web-indexer:{{ .Tag }}
-    image_templates:
-      - olcr.io/crys/web-indexer/amd64:{{ .Tag }}
-      - olcr.io/crys/web-indexer/arm64:{{ .Tag }}
 
 nfpms:
   - maintainer: Kristof Bach <crys@crys.hu>
@@ -103,3 +45,4 @@ nfpms:
     section: utils
     formats:
       - deb
+    umask: 0o022
