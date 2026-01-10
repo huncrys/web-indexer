@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 - 2026-01-10
+
+- feat: directory stats @huncrys (#90)
+- chore: build(deps): bump github.com/go-viper/mapstructure/v2 from 2.2.1 to 2.3.0 in the go_modules group @[dependabot[bot]](https://github.com/apps/dependabot) (#100)
+- chore: build(deps): bump stefanzweifel/git-auto-commit-action from 5 to 6 @[dependabot[bot]](https://github.com/apps/dependabot) (#98)
+
 ## 0.8.1 - 2025-06-17
 
 * Expose link-up-from-root args in GH action
