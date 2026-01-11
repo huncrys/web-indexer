@@ -2,6 +2,7 @@
 package webindexer
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"html/template"
@@ -13,9 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/charmbracelet/log"
 )
 
@@ -36,7 +36,7 @@ type Indexer struct {
 	Cfg          Config
 	Source       FileSource
 	Target       FileSource
-	s3           *s3.S3
+	s3           *s3.Client
 	BackendSetup BackendSetup
 }
 
@@ -161,16 +161,24 @@ func setupBackends(indexer *Indexer) error {
 
 	if isS3URI(indexer.Cfg.Source) || isS3URI(indexer.Cfg.Target) {
 		log.Debug("Setting up S3 session")
-		cfg := aws.NewConfig()
-		if indexer.Cfg.S3Endpoint != "" {
-			cfg = cfg.WithEndpoint(indexer.Cfg.S3Endpoint)
-		}
-		sess, err := session.NewSession(cfg)
+		cfg, err := config.LoadDefaultConfig(context.TODO())
 		if err != nil {
-			return fmt.Errorf("failed to create AWS session: %w", err)
+			return fmt.Errorf("unable to load AWS SDK config: %w", err)
 		}
 
-		indexer.s3 = s3.New(sess)
+		var options []func(*s3.Options)
+		if indexer.Cfg.S3Endpoint != "" {
+			log.Debug("Using custom S3 endpoint", "endpoint", indexer.Cfg.S3Endpoint)
+			if !strings.HasPrefix(indexer.Cfg.S3Endpoint, "http") {
+				indexer.Cfg.S3Endpoint = "https://" + indexer.Cfg.S3Endpoint
+			}
+			options = append(options, func(o *s3.Options) {
+				o.BaseEndpoint = &indexer.Cfg.S3Endpoint
+				o.UsePathStyle = true
+			})
+		}
+
+		indexer.s3 = s3.NewFromConfig(cfg, options...)
 	}
 
 	// For local directories, convert relative paths to absolute paths
