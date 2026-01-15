@@ -46,8 +46,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     -o /rootfs/usr/local/bin/web-indexer .
 EOT
 
-COPY ./entrypoint.sh /rootfs/usr/local/bin/docker-entrypoint
-
 FROM alpine:3.23@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
 
 RUN --mount=type=cache,target=/var/cache/apk \
