@@ -30,6 +30,10 @@ build image:
     strategy: mirror
     include:
       - component: $CI_SERVER_FQDN/oaklab/ci-templates/hadolint@11
+        inputs:
+          paths:
+            - Dockerfile
+            - standalone.Dockerfile
       - component: $CI_SERVER_FQDN/oaklab/ci-templates/oci-publish@11
         inputs:
           dockerfile: standalone.Dockerfile
