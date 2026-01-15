@@ -1,6 +1,8 @@
-FROM alpine
-RUN apk add --no-cache bash ca-certificates tzdata
-COPY web-indexer /usr/bin/web-indexer
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /usr/bin/web-indexer /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+FROM alpine:3.23@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed31662dff6da4eb62
+
+RUN --mount=type=cache,target=/var/cache/apk \
+    apk add -uU ca-certificates tzdata
+
+COPY web-indexer /usr/local/bin/web-indexer
+
+ENTRYPOINT ["web-indexer"]

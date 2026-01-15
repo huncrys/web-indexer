@@ -164,6 +164,7 @@ func setupBackends(indexer *Indexer) error {
 		cfg := aws.NewConfig()
 		if indexer.Cfg.S3Endpoint != "" {
 			cfg = cfg.WithEndpoint(indexer.Cfg.S3Endpoint)
+			log.Debug("Using custom S3 endpoint", "endpoint", indexer.Cfg.S3Endpoint)
 		}
 		sess, err := session.NewSession(cfg)
 		if err != nil {
