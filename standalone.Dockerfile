@@ -55,4 +55,4 @@ RUN --mount=type=cache,target=/var/cache/apk \
   ;
 COPY --from=builder /rootfs/ /
 
-ENTRYPOINT ["docker-entrypoint"]
+ENTRYPOINT ["web-indexer"]
