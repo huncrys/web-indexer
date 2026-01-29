@@ -2,7 +2,7 @@
 
 FROM --platform=${BUILDPLATFORM} tonistiigi/xx:1.9.0@sha256:c64defb9ed5a91eacb37f96ccc3d4cd72521c4bd18d5442905b95e2226b0e707 AS xx
 
-FROM --platform=${BUILDPLATFORM} golang:1.25-alpine@sha256:660f0b83cf50091e3777e4730ccc0e63e83fea2c420c872af5c60cb357dcafb2 AS builder
+FROM --platform=${BUILDPLATFORM} golang:1.25-alpine@sha256:98e6cffc31ccc44c7c15d83df1d69891efee8115a5bb7ede2bf30a38af3e3c92 AS builder
 
 SHELL ["/bin/ash", "-euo", "pipefail", "-c"]
 
