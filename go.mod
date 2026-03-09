@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.11
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.4
 	github.com/boumenot/gocover-cobertura v1.3.0
-	github.com/charmbracelet/log v0.4.2
+	github.com/charmbracelet/log/v2 v2.0.0
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/segmentio/golines v0.12.2
 	github.com/spf13/cobra v1.10.2
