@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
+	"charm.land/log/v2"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/charmbracelet/log"
 )
 
 //go:embed templates/themes/default.html.tmpl
