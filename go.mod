@@ -7,7 +7,7 @@ toolchain go1.26.1
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.3
 	github.com/aws/aws-sdk-go-v2/config v1.32.11
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.4
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.97.0
 	github.com/boumenot/gocover-cobertura v1.3.0
 	github.com/charmbracelet/log v0.4.2
 	github.com/golangci/golangci-lint v1.64.8
