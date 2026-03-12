@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"charm.land/log/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/charmbracelet/log"
 )
 
 type S3Backend struct {
