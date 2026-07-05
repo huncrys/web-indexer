@@ -2,6 +2,8 @@ package webindexer
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -39,6 +41,15 @@ func (m *MockS3Client) PutObject(
 ) (*s3.PutObjectOutput, error) {
 	args := m.Called(context, params, optFns)
 	return args.Get(0).(*s3.PutObjectOutput), args.Error(1)
+}
+
+func (m *MockS3Client) HeadObject(
+	context context.Context,
+	params *s3.HeadObjectInput,
+	optFns ...func(*s3.Options),
+) (*s3.HeadObjectOutput, error) {
+	args := m.Called(context, params, optFns)
+	return args.Get(0).(*s3.HeadObjectOutput), args.Error(1)
 }
 
 func TestS3BackendRead(t *testing.T) {
@@ -131,6 +142,151 @@ func TestS3BackendRead(t *testing.T) {
 	}
 
 	mockSvc.AssertExpectations(t)
+}
+
+func TestS3BackendReadWithMetadataMtime(t *testing.T) {
+	mockSvc := new(MockS3Client)
+	backend := S3Backend{
+		svc:    mockSvc,
+		bucket: "test-bucket",
+		cfg: Config{
+			Source:           "s3://test-bucket",
+			IndexFile:        "index.html",
+			UseMetadataMtime: true,
+		},
+	}
+
+	listedMtime := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	metaMtime := time.Date(2024, 6, 15, 12, 30, 45, 0, time.UTC)
+
+	mockSvc.On(
+		"ListObjectsV2",
+		mockContext,
+		mock.Anything,
+		mockOptFns,
+	).Return(&s3.ListObjectsV2Output{
+		Contents: []types.Object{
+			{
+				Key:          aws.String("file1.txt"),
+				Size:         aws.Int64(1024),
+				LastModified: aws.Time(listedMtime),
+			},
+			{
+				Key:          aws.String("file2.txt"),
+				Size:         aws.Int64(2048),
+				LastModified: aws.Time(listedMtime),
+			},
+		},
+	}, nil)
+
+	mockSvc.On(
+		"HeadObject",
+		mockContext,
+		&s3.HeadObjectInput{Bucket: aws.String("test-bucket"), Key: aws.String("file1.txt")},
+		mockOptFns,
+	).Return(&s3.HeadObjectOutput{
+		Metadata: map[string]string{"mtime": strconv.FormatInt(metaMtime.Unix(), 10)},
+	}, nil)
+
+	mockSvc.On(
+		"HeadObject",
+		mockContext,
+		&s3.HeadObjectInput{Bucket: aws.String("test-bucket"), Key: aws.String("file2.txt")},
+		mockOptFns,
+	).Return(&s3.HeadObjectOutput{
+		Metadata: map[string]string{},
+	}, nil)
+
+	items, hasNoIndex, err := backend.Read("/")
+	require.NoError(t, err)
+	assert.False(t, hasNoIndex)
+	require.Len(t, items, 2)
+
+	for _, item := range items {
+		switch item.Name {
+		case "file1.txt":
+			assert.True(t, item.LastModified.Equal(metaMtime.Local()), "expected metadata mtime to be used")
+		case "file2.txt":
+			assert.True(t, item.LastModified.Equal(listedMtime.Local()), "expected fallback to listed mtime")
+		default:
+			t.Fatalf("unexpected item %s", item.Name)
+		}
+	}
+
+	mockSvc.AssertExpectations(t)
+}
+
+func TestS3BackendMetadataMtime(t *testing.T) {
+	tests := []struct {
+		name      string
+		metadata  map[string]string
+		headErr   error
+		wantOK    bool
+		wantMtime time.Time
+	}{
+		{
+			name:      "whole seconds",
+			metadata:  map[string]string{"mtime": "1718455845"},
+			wantOK:    true,
+			wantMtime: time.Unix(1718455845, 0),
+		},
+		{
+			name:      "fractional seconds with nanosecond precision",
+			metadata:  map[string]string{"mtime": "1718455845.123456789"},
+			wantOK:    true,
+			wantMtime: time.Unix(1718455845, 123456789),
+		},
+		{
+			name:      "fractional seconds with millisecond precision",
+			metadata:  map[string]string{"mtime": "1718455845.500"},
+			wantOK:    true,
+			wantMtime: time.Unix(1718455845, 500000000),
+		},
+		{
+			name:     "missing metadata key",
+			metadata: map[string]string{},
+			wantOK:   false,
+		},
+		{
+			name:     "unparseable value",
+			metadata: map[string]string{"mtime": "not-a-timestamp"},
+			wantOK:   false,
+		},
+		{
+			name:    "HeadObject error",
+			headErr: fmt.Errorf("access denied"),
+			wantOK:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockSvc := new(MockS3Client)
+			backend := S3Backend{svc: mockSvc, bucket: "test-bucket"}
+
+			var out *s3.HeadObjectOutput
+			if tt.headErr == nil {
+				out = &s3.HeadObjectOutput{Metadata: tt.metadata}
+			} else {
+				out = &s3.HeadObjectOutput{}
+			}
+
+			mockSvc.On(
+				"HeadObject",
+				mockContext,
+				&s3.HeadObjectInput{Bucket: aws.String("test-bucket"), Key: aws.String("file.txt")},
+				mockOptFns,
+			).Return(out, tt.headErr)
+
+			mtime, ok := backend.metadataMtime("file.txt")
+			require.Equal(t, tt.wantOK, ok)
+			if tt.wantOK {
+				assert.True(t, mtime.Equal(tt.wantMtime), "expected %s, got %s", tt.wantMtime, mtime)
+			}
+
+			mockSvc.AssertExpectations(t)
+		})
+	}
 }
 
 func TestS3BackendReadWithNoIndex(t *testing.T) {

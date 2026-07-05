@@ -293,6 +293,13 @@ source: "blah/"
 # target is the path to a local directory or an S3 URI.
 target: "blah/"
 
+# use_metadata_mtime uses the X-Amz-Meta-Mtime object metadata (as set by
+# tools like rclone and s3cmd) for last-modified times instead of the S3
+# LastModified field, which only reflects upload time. Only applies to S3
+# sources. Requires an extra HeadObject request per file, so it is slower
+# on large listings.
+use_metadata_mtime: false
+
 # template is the path to a local Go template file to use for generating the
 # indexes. The built-in template is used by default.
 template: ""

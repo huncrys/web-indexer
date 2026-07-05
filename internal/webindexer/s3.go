@@ -4,12 +4,20 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"charm.land/log/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
+
+// mtimeMetadataKey is the object metadata key (X-Amz-Meta-Mtime, without the
+// x-amz-meta- prefix) used by tools such as rclone and s3cmd to preserve the
+// original file modification time as a Unix timestamp, since S3's own
+// LastModified is set to the upload time rather than the source file's mtime.
+const mtimeMetadataKey = "mtime"
 
 type S3Backend struct {
 	svc    S3API
@@ -28,6 +36,11 @@ type S3API interface {
 		params *s3.PutObjectInput,
 		optFns ...func(*s3.Options),
 	) (*s3.PutObjectOutput, error)
+	HeadObject(
+		ctx context.Context,
+		params *s3.HeadObjectInput,
+		optFns ...func(*s3.Options),
+	) (*s3.HeadObjectOutput, error)
 }
 
 var _ FileSource = &S3Backend{}
@@ -98,6 +111,12 @@ func (s *S3Backend) Read(prefix string) ([]*Item, bool, error) {
 			HasMetadata:  true,
 		}
 
+		if s.cfg.UseMetadataMtime {
+			if mtime, ok := s.metadataMtime(*content.Key); ok {
+				item.LastModified = mtime.Local()
+			}
+		}
+
 		items = append(items, item)
 	}
 
@@ -140,6 +159,64 @@ func (s *S3Backend) Read(prefix string) ([]*Item, bool, error) {
 	}
 
 	return items, false, nil
+}
+
+// metadataMtime fetches the X-Amz-Meta-Mtime object metadata for key via
+// HeadObject and parses it as a Unix timestamp, the convention used by tools
+// like rclone and s3cmd to preserve the original file modification time. It
+// returns false if the request fails or the metadata is missing/unparseable.
+func (s *S3Backend) metadataMtime(key string) (time.Time, bool) {
+	resp, err := s.svc.HeadObject(context.TODO(), &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		log.Warnf("Unable to fetch metadata for %s/%s: %s", s.bucket, key, err)
+		return time.Time{}, false
+	}
+
+	raw, ok := resp.Metadata[mtimeMetadataKey]
+	if !ok {
+		return time.Time{}, false
+	}
+
+	seconds, nanoseconds, err := parseUnixTimestamp(raw)
+	if err != nil {
+		log.Warnf("Unable to parse X-Amz-Meta-Mtime %q for %s/%s: %s", raw, s.bucket, key, err)
+		return time.Time{}, false
+	}
+
+	return time.Unix(seconds, nanoseconds), true
+}
+
+// parseUnixTimestamp parses a Unix timestamp of the form "seconds" or
+// "seconds.fraction" (e.g. "1481478242.702218729"), as used by rclone and
+// s3cmd. It's parsed as separate integer and fractional parts rather than a
+// float64 to avoid losing precision at nanosecond resolution.
+func parseUnixTimestamp(raw string) (seconds, nanoseconds int64, err error) {
+	whole, frac, hasFrac := strings.Cut(raw, ".")
+
+	seconds, err = strconv.ParseInt(whole, 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	if !hasFrac {
+		return seconds, 0, nil
+	}
+
+	if len(frac) > 9 {
+		frac = frac[:9]
+	} else {
+		frac += strings.Repeat("0", 9-len(frac))
+	}
+
+	nanoseconds, err = strconv.ParseInt(frac, 10, 64)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return seconds, nanoseconds, nil
 }
 
 // EnsureDirExists is a no-op for S3 as directories are implicit.

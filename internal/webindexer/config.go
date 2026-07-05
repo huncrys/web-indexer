@@ -5,32 +5,33 @@ import (
 )
 
 type Config struct {
-	BaseURL        string   `mapstructure:"base_url"`
-	DateFormat     string   `mapstructure:"date_format"`
-	DirsFirst      bool     `mapstructure:"dirs_first"`
-	IndexFile      string   `mapstructure:"index_file"`
-	LinkToIndexes  bool     `mapstructure:"link_to_index"`
-	LinkUpFromRoot bool     `mapstructure:"link_up_from_root"`
-	LinkUpText     string   `mapstructure:"link_up_text"`
-	LinkUpURL      string   `mapstructure:"link_up_url"`
-	LogLevel       string   `mapstructure:"log_level"`
-	LogFile        string   `mapstructure:"log_file"`
-	Minify         bool     `mapstructure:"minify"`
-	NoIndexFiles   []string `mapstructure:"noindex_files"`
-	SkipIndexFiles []string `mapstructure:"skipindex_files"`
-	Order          string   `mapstructure:"order"`
-	Quiet          bool     `mapstructure:"quiet"`
-	Recursive      bool     `mapstructure:"recursive"`
-	Skips          []string `mapstructure:"skips"`
-	SortBy         string   `mapstructure:"sort_by"`
-	Source         string   `mapstructure:"source"`
-	Target         string   `mapstructure:"target"`
-	Template       string   `mapstructure:"template"`
-	Theme          string   `mapstructure:"theme"`
-	Title          string   `mapstructure:"title"`
-	CfgFile        string   `mapstructure:"-"`
-	BasePath       string   `mapstructure:"-"`
-	S3Endpoint     string   `mapstructure:"s3_endpoint"`
+	BaseURL          string   `mapstructure:"base_url"`
+	DateFormat       string   `mapstructure:"date_format"`
+	DirsFirst        bool     `mapstructure:"dirs_first"`
+	IndexFile        string   `mapstructure:"index_file"`
+	LinkToIndexes    bool     `mapstructure:"link_to_index"`
+	LinkUpFromRoot   bool     `mapstructure:"link_up_from_root"`
+	LinkUpText       string   `mapstructure:"link_up_text"`
+	LinkUpURL        string   `mapstructure:"link_up_url"`
+	LogLevel         string   `mapstructure:"log_level"`
+	LogFile          string   `mapstructure:"log_file"`
+	Minify           bool     `mapstructure:"minify"`
+	NoIndexFiles     []string `mapstructure:"noindex_files"`
+	SkipIndexFiles   []string `mapstructure:"skipindex_files"`
+	Order            string   `mapstructure:"order"`
+	Quiet            bool     `mapstructure:"quiet"`
+	Recursive        bool     `mapstructure:"recursive"`
+	Skips            []string `mapstructure:"skips"`
+	SortBy           string   `mapstructure:"sort_by"`
+	Source           string   `mapstructure:"source"`
+	Target           string   `mapstructure:"target"`
+	Template         string   `mapstructure:"template"`
+	Theme            string   `mapstructure:"theme"`
+	Title            string   `mapstructure:"title"`
+	CfgFile          string   `mapstructure:"-"`
+	BasePath         string   `mapstructure:"-"`
+	S3Endpoint       string   `mapstructure:"s3_endpoint"`
+	UseMetadataMtime bool     `mapstructure:"use_metadata_mtime"`
 }
 
 type SortBy string
