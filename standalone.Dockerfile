@@ -2,6 +2,8 @@
 
 FROM --platform=${BUILDPLATFORM} tonistiigi/xx:1.9.0@sha256:c64defb9ed5a91eacb37f96ccc3d4cd72521c4bd18d5442905b95e2226b0e707 AS xx
 
+FROM olcr.io/oaklab/ci-helpers:1.1.0@sha256:244511d20c57c66762226890a3c0fa7e60fbec0aa4468d850b8e7021f4f3e49d AS helpers
+
 FROM --platform=${BUILDPLATFORM} golang:1.26-alpine@sha256:0178a641fbb4858c5f1b48e34bdaabe0350a330a1b1149aabd498d0699ff5fb2 AS builder
 
 SHELL ["/bin/ash", "-euo", "pipefail", "-c"]
@@ -19,6 +21,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
 
 COPY --from=xx / /
+COPY --from=helpers / /usr/local/bin/
 ARG TARGETARCH
 ARG TARGETPLATFORM
 ARG BUILD_VERSION
@@ -26,17 +29,9 @@ COPY . /src/
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
 <<EOT
-  if [ -z "${BUILD_VERSION:-}" ]; then
-    if git describe --tags --exact-match >/dev/null 2>&1; then
-      BUILD_VERSION=$(git describe --tags --exact-match)
-    else
-      latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo 0.0.0)
-      short_sha=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
-      BUILD_VERSION="${latest_tag}-SNAPSHOT-${short_sha}"
-    fi
-    
-    echo "Building version: ${BUILD_VERSION}"
-  fi
+  BUILD_VERSION="$(git-build-version)"
+
+  echo "Building version: ${BUILD_VERSION}"
 
   mkdir -p /rootfs/usr/local/bin
 

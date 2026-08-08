@@ -50,6 +50,9 @@ build image:
             - linux/arm64
           registry-cache: true
           no-cache: $[[ inputs.no-cache ]]
+          # Full clone so the Dockerfile's `git describe` sees tags and can
+          # stamp the version on untagged builds too.
+          git-depth: 0
 
 release:
   stage: release
