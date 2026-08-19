@@ -4,7 +4,7 @@ FROM --platform=${BUILDPLATFORM} tonistiigi/xx:1.9.0@sha256:c64defb9ed5a91eacb37
 
 FROM olcr.io/oaklab/ci-helpers:1.1.0@sha256:244511d20c57c66762226890a3c0fa7e60fbec0aa4468d850b8e7021f4f3e49d AS helpers
 
-FROM --platform=${BUILDPLATFORM} golang:1.27-alpine@sha256:7d5cbf6833f7331dafd25a2e8b9673477f559759ff8ed4ca8efabe6795ad08db AS builder
+FROM --platform=${BUILDPLATFORM} golang:1.27-alpine@sha256:4c9fe60190a2a3350ddc51de80d0224b8a6698d12bdfc999fee45ea9d6c46dbc AS builder
 
 SHELL ["/bin/ash", "-euo", "pipefail", "-c"]
 
